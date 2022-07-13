@@ -11,6 +11,7 @@ global using System.Collections.Concurrent;
 global using ScoutingServer3489;
 global using ScoutingServer3489.Utils;
 global using ScoutingServer3489.Data;
+global using ScoutingServer3489.Data.Tba;
 global using ScoutingServer3489.Logic;
 global using ScoutingShared3489;
 
