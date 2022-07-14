@@ -4,7 +4,7 @@
     <TargetFramework>netstandard2.1</TargetFramework>
     <RootNamespace>ScoutingShared3489</RootNamespace>
     <Nullable>disable</Nullable>
-    <BaseOutputPath>C:\Users\Connor Myers\Desktop\Projects\3489-Scouting-App\Assets\3489-Scouting-Shared</BaseOutputPath>
+    <BaseOutputPath>E:\Projects\Unity\3489-Scouting-App\Assets\3489-Scouting-Shared</BaseOutputPath>
   </PropertyGroup>
 
 </Project>

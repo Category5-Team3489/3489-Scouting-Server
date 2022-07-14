@@ -22,4 +22,8 @@ public static class DbUtils
             new UpdateOptions() { IsUpsert = true }
         );
     }
+    public static async Task DeleteCollectionFields(IMongoCollection<BsonDocument> collection, string field)
+    {
+        await collection.DeleteManyAsync(Builders<BsonDocument>.Filter.Exists(field));
+    }
 }

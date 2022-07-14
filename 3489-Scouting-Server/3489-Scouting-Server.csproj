@@ -15,7 +15,7 @@
 
   <ItemGroup>
     <Reference Include="3489-Scouting-Shared">
-      <HintPath>..\..\3489-Scouting-App\Assets\3489-Scouting-Shared\Debug\netstandard2.1\3489-Scouting-Shared.dll</HintPath>
+      <HintPath>E:\Projects\Unity\3489-Scouting-App\Assets\3489-Scouting-Shared\Debug\netstandard2.1\3489-Scouting-Shared.dll</HintPath>
     </Reference>
   </ItemGroup>
 

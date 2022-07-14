@@ -83,56 +83,15 @@ public class ScoutingServer : TcpServer
 
     private async Task Init()
     {
-        //var eventTeamsJsonDocs = await mongo.Values.FindAsync(Builders<BsonDocument>.Filter.Exists("event_teams_json"));
-        //eventTeamsJson.
-        //tba.LoadEventMatches();
-        Tba.UpdateEventKey("2022new");
-
-        // TODO delete event_matches_json whenever it becomes invalid
-        // TODO delete event_teams_json whenever it becomes invalid
-
-        //await mongo.Values.DeleteManyAsync(Builders<BsonDocument>.Filter.Exists("event_matches_json"));
-
-        bool loadedEventMatches = await Values.TryLoadExisting("event_matches_json", json => Tba.LoadEventMatches(json));
-        if (!loadedEventMatches)
+        var eventKey = await DbUtils.TryGetCollectionField(Mongo.Values, "event_key");
+        if (eventKey is not null)
         {
-            Console.WriteLine("downloading event matches json");
-            await Tba.UpdateEventMatches();
-
-            await Mongo.Values.UpdateOneAsync(
-                Builders<BsonDocument>.Filter
-                .Exists("event_matches_json"),
-                Builders<BsonDocument>.Update
-                .Set("event_matches_json", Tba.EventMatchesJson),
-                new UpdateOptions() { IsUpsert = true }
-            );
-            Console.WriteLine("downloaded and loaded event matches json");
+            await Tba.UpdateEventKeyAndLoadData(eventKey);
         }
-
-        bool loadedEventTeams = await Values.TryLoadExisting("event_teams_json", json => Tba.EventTeamsData.TryLoadData(json));
-
-        if (Tba.EventTeams is null)
+        else
         {
-            Console.WriteLine("downloading event teams json");
-            await Tba.UpdateEventTeams();
-
-            await Mongo.Values.UpdateOneAsync(
-                Builders<BsonDocument>.Filter
-                .Exists("event_teams_json"),
-                Builders<BsonDocument>.Update
-                .Set("event_teams_json", Tba.EventTeamsJson),
-                new UpdateOptions() { IsUpsert = true }
-            );
-            Console.WriteLine("downloaded and loaded event teams json");
+            Console.WriteLine("unable to load event key");
         }
-
-        await Mongo.Values.UpdateOneAsync(
-            Builders<BsonDocument>.Filter
-            .Exists("event_key"),
-            Builders<BsonDocument>.Update
-            .Set("event_key", "2022new"),
-            new UpdateOptions() { IsUpsert = true }
-        );
     }
 
     #region Message Handling

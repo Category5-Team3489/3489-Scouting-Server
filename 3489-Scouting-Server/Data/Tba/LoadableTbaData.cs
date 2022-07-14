@@ -5,6 +5,7 @@ public class LoadableTbaData<T> where T : class
     private readonly HttpClient httpClient;
     private readonly Func<Task<string?>> getData;
     private readonly Func<string, Task> upsertData;
+    private readonly Func<Task> deleteData;
     private readonly Func<string, string> endpointProvider;
 
     private string? eventKey = null;
@@ -12,21 +13,24 @@ public class LoadableTbaData<T> where T : class
     public T? Data { get; private set; } = null;
     public string? Json { get; private set; } = null;
 
-    public LoadableTbaData(HttpClient httpClient, Func<Task<string?>> getData, Func<string, Task> upsertData, Func<string, string> endpointProvider)
+    public LoadableTbaData(HttpClient httpClient, Func<Task<string?>> getData, Func<string, Task> upsertData, Func<Task> deleteData, Func<string, string> endpointProvider)
     {
         this.httpClient = httpClient;
         this.getData = getData;
         this.upsertData = upsertData;
+        this.deleteData = deleteData;
         this.endpointProvider = endpointProvider;
     }
 
     // true if event key was updated
-    public bool UpdateEventKey(string eventKey)
+    public async Task<bool> UpdateEventKey(string eventKey)
     {
         if (this.eventKey != eventKey)
         {
+            this.eventKey = eventKey;
             Data = null;
             Json = null;
+            await deleteData();
             return true;
         }
         return false;
@@ -40,11 +44,11 @@ public class LoadableTbaData<T> where T : class
         {
             return await TryDeserializeJson(json);
         }
-        return false;
+        return await TryDownloadAndLoadData();
     }
 
     // true if data was successfully downloaded and loaded
-    public async Task<bool> TryDownloadAndLoadData()
+    private async Task<bool> TryDownloadAndLoadData()
     {
         if (string.IsNullOrEmpty(eventKey))
         {
