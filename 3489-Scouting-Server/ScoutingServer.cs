@@ -2,8 +2,8 @@
 
 public class ScoutingServer : TcpServer
 {
-    public TbaData Tba { get; private set; }
     public MongoData Mongo { get; private set; }
+    public TbaData Tba { get; private set; }
 
     public ValuesLogic Values { get; private set; }
 
@@ -18,10 +18,10 @@ public class ScoutingServer : TcpServer
     public ScoutingServer(IPAddress address, int port, string apiKey) : base(address, port)
     {
         // Initial Assignment
-        Tba = new(new HttpClient(), apiKey);
         Console.WriteLine("connecting to mongodb");
         Mongo = new(new MongoClient("mongodb://localhost:27017"));
         Console.WriteLine("connected to mongodb");
+        Tba = new(new HttpClient(), Mongo, apiKey);
 
         Values = new(this);
 
@@ -109,7 +109,7 @@ public class ScoutingServer : TcpServer
             Console.WriteLine("downloaded and loaded event matches json");
         }
 
-        bool loadedEventTeams = await Values.TryLoadExisting("event_teams_json", json => Tba.LoadEventTeams(json));
+        bool loadedEventTeams = await Values.TryLoadExisting("event_teams_json", json => Tba.EventTeamsData.TryLoadData(json));
 
         if (Tba.EventTeams is null)
         {

@@ -3,90 +3,29 @@
 public class TbaData
 {
     private readonly HttpClient httpClient;
+    private readonly MongoData mongo;
     private readonly string apiKey;
 
-    private string? eventKey = null;
+    public LoadableTbaData<MatchSimpleSchema[]> EventMatchesData { get; private set; }
+    public LoadableTbaData<TeamSimpleSchema[]> EventTeamsData { get; private set; }
 
-    private string? matchesEventKey = null;
-    private string? teamsEventKey = null;
-
-    public MatchSimpleSchema[]? EventMatches { get; private set; } = null;
-    public string? EventMatchesJson { get; private set; } = null;
-    public TeamSimpleSchema[]? EventTeams { get; private set; } = null;
-    public string? EventTeamsJson { get; private set; } = null;
-
-    public TbaData(HttpClient httpClient, string apiKey)
+    public TbaData(HttpClient httpClient, MongoData mongo, string apiKey)
     {
         this.httpClient = httpClient;
+        this.mongo = mongo;
         this.apiKey = apiKey;
-    }
 
-    public void UpdateEventKey(string eventKey)
-    {
-        this.eventKey = eventKey;
-
-        if (string.IsNullOrEmpty(matchesEventKey) || matchesEventKey != eventKey)
-        {
-            EventMatches = null;
-            EventMatchesJson = null;
-        }
-
-        if (string.IsNullOrEmpty(teamsEventKey) || teamsEventKey != eventKey)
-        {
-            EventTeams = null;
-            EventTeamsJson = null;
-        }
-    }
-
-    public void LoadEventMatches(string json)
-    {
-        EventMatches = JsonSerializer.Deserialize<MatchSimpleSchema[]>(json);
-        EventMatchesJson = json;
-    }
-    public void LoadEventTeams(string json)
-    {
-        EventTeams = JsonSerializer.Deserialize<TeamSimpleSchema[]>(json);
-        EventTeamsJson = json;
-    }
-
-    public async Task UpdateEventMatches()
-    {
-        if (string.IsNullOrEmpty(eventKey))
-        {
-            return;
-        }
-
-        matchesEventKey = eventKey;
-
-        try
-        {
-            string json = await httpClient.GetStringAsync($"https://www.thebluealliance.com/api/v3/event/{eventKey}/matches/simple?X-TBA-Auth-Key={apiKey}");
-            LoadEventMatches(json);
-        }
-        catch (Exception)
-        {
-            EventMatches = null;
-            EventMatchesJson = null;
-        }
-    }
-    public async Task UpdateEventTeams()
-    {
-        if (string.IsNullOrEmpty(eventKey))
-        {
-            return;
-        }
-
-        teamsEventKey = eventKey;
-
-        try
-        {
-            string json = await httpClient.GetStringAsync($"https://www.thebluealliance.com/api/v3/event/{eventKey}/teams/simple?X-TBA-Auth-Key={apiKey}");
-            LoadEventTeams(json);
-        }
-        catch (Exception)
-        {
-            EventTeams = null;
-            EventTeamsJson = null;
-        }
+        EventMatchesData = new(
+            httpClient,
+            async () => await DbUtils.TryGetCollectionField(mongo.Values, "event_matches_json"),
+            async json => await DbUtils.UpsertCollectionField(mongo.Values, "event_matches_json", json), 
+            eventKey => $"https://www.thebluealliance.com/api/v3/event/{eventKey}/matches/simple?X-TBA-Auth-Key={apiKey}"
+        );
+        EventTeamsData = new(
+            httpClient,
+            async () => await DbUtils.TryGetCollectionField(mongo.Values, "event_teams_json"),
+            async json => await DbUtils.UpsertCollectionField(mongo.Values, "event_teams_json", json),
+            eventKey => $"https://www.thebluealliance.com/api/v3/event/{eventKey}/teams/simple?X-TBA-Auth-Key={apiKey}"
+        );
     }
 }
